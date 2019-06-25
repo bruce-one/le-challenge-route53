@@ -66,21 +66,21 @@ Challenge.set = function (opts, domain, token, keyAuthorization, cb) {
           value: keyAuthDigest
         }));
     })
-    .then(() => {
+    .then(() => new Promise((resolve, reject) => {
       const end = Date.now() + opts.maxDelay;
       function check() {
-        if(Date.now() > end) return cb(); // Should this return an error? or maybe log and return fine?
+        if(Date.now() > end) return resolve(); // Should this return an error? or maybe log and return fine?
         resolveTxt(prefixedDomain, (err, records) => {
           if(records && records.some( ([r]) => keyAuthDigest === r || `"${r}"` === keyAuthDigest)) {
-            cb();
+            resolve();
           } else {
             setTimeout(check, opts.delay);
           }
         })
       }
       check();
-    })
-    .catch(cb);
+    }))
+    .then(() => cb(), cb);
 };
 
 /* eslint-disable no-unused-vars */
