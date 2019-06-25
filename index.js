@@ -55,7 +55,7 @@ Challenge.create = function (options) {
 
 Challenge.set = function (opts, domain, token, keyAuthorization, cb) {
   const keyAuthDigest = encrypt(keyAuthorization);
-  const prefixedDomain = getChallengeDomain(opts.acmeChallengeDns, domain);
+  const prefixedDomain = opts.acmePrefix || getChallengeDomain(opts.acmeChallengeDns, domain);
   return opts.hostedZone.then(id => {
       const params = route53CreatePayload(id, prefixedDomain, keyAuthDigest);
       return changeResourceRecordSets(params)
