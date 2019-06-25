@@ -59,6 +59,7 @@ Challenge.set = function (opts, domain, token, keyAuthorization, cb) {
   return opts.hostedZone.then(id => {
       const params = route53CreatePayload(id, prefixedDomain, keyAuthDigest);
       return changeResourceRecordSets(params)
+        .then(() => store.remove(domain).catch(() => null))
         .then(() => store.set(domain, {
           id,
           domain,
