@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const { resolveTxt } = require('dns');
 const {
   changeResourceRecordSets,
   getZoneIDByName,
@@ -22,6 +23,7 @@ const Challenge = module.exports;
 const defaults = {
   debug: false,
   delay: 2e4,
+  maxDelay: 120e3,
   acmeChallengeDns: '_acme-challenge.'
 };
 
@@ -64,7 +66,18 @@ Challenge.set = function (opts, domain, token, keyAuthorization, cb) {
         }));
     })
     .then(() => {
-      setTimeout(cb, opts.delay, null);
+      const end = Date.now() + opts.maxDelay;
+      function check() {
+        if(Date.now() > end) return cb(); // Should this return an error? or maybe log and return fine?
+        resolveTxt(prefixedDomain, (err, records) => {
+          if(records && records.some( ([r]) => keyAuthDigest === r || `"${r}"` === keyAuthDigest)) {
+            cb();
+          } else {
+            setTimeout(check, opts.delay);
+          }
+        })
+      }
+      check();
     })
     .catch(cb);
 };
